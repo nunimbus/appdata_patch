@@ -23,7 +23,7 @@
 
 namespace OCA\AppDataPatch\AppInfo;
 
-use OCA\ClassOverrides\InstallFunctions;
+use OCA\PatchAssets\InstallFunctions;
 use OCP\AppFramework\App;
 use OCP\AppFramework\Bootstrap\IBootContext;
 use OCP\AppFramework\Bootstrap\IBootstrap;
@@ -36,9 +36,9 @@ class Application extends App implements IBootstrap {
 	public function __construct(array $urlParams = []) {
 		parent::__construct(self::APP_ID, $urlParams);
 
-		if (! class_exists('OCA\\ClassOverrides\\InstallFunctions')) {
+		if (! class_exists('OCA\\PatchAssets\\InstallFunctions')) {
 			$classMap = \OC::$composerAutoloader->getClassMap();
-			$classMap['OCA\\ClassOverrides\\InstallFunctions'] = \OC::$server->getAppManager()->getAppPath(self::APP_ID) . '/lib/InstallFunctions.php';
+			$classMap['OCA\\PatchAssets\\InstallFunctions'] = \OC::$server->getAppManager()->getAppPath(self::APP_ID) . '/lib/assets/InstallFunctions.php';
 			\OC::$composerAutoloader->addClassMap($classMap);
 		}
 	}

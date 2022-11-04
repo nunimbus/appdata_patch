@@ -26,7 +26,7 @@ declare(strict_types=1);
 
 namespace OCA\AppDataPatch\Migration;
 
-use OCA\ClassOverrides\InstallFunctions;
+use OCA\PatchAssets\InstallFunctions;
 use Closure;
 use OCP\DB\ISchemaWrapper;
 use OCP\Migration\IOutput;
