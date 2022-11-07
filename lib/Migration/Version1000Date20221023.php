@@ -43,7 +43,8 @@ class Version1000Date20221023 extends SimpleMigrationStep {
 	 */
 	public function changeSchema(IOutput $output, Closure $schemaClosure, array $options): ?ISchemaWrapper {
 		$schema = $schemaClosure();
-		InstallFunctions::install();
+		$appId = OC::$server->get('OC\AppFramework\App')->getAppIdForClass(get_class($this));
+		InstallFunctions::install($appId);
 		
 		return $schema;
 	}
