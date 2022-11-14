@@ -28,6 +28,7 @@ use OCP\AppFramework\App;
 use OCP\AppFramework\Bootstrap\IBootContext;
 use OCP\AppFramework\Bootstrap\IBootstrap;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
+use OC_App;
 use OC;
 
 class Application extends App implements IBootstrap {
@@ -37,12 +38,8 @@ class Application extends App implements IBootstrap {
 	public function __construct(array $urlParams = []) {
 		parent::__construct(self::APP_ID, $urlParams);
 
-		// Need to make the class available to the migrations if the app is not yet installed
-		if (! (OC::$server->getAppManager()->isInstalled(self::APP_ID) && class_exists('OCA\\PatchAssets\\InstallFunctions'))) {
-			$classMap = OC::$composerAutoloader->getClassMap();
-			$classMap['OCA\\PatchAssets\\InstallFunctions'] = OC::$server->getAppManager()->getAppPath(self::APP_ID) . '/lib/assets/InstallFunctions.php';
-			OC::$composerAutoloader->addClassMap($classMap);
-		}
+		// Need to load the helper app and its classes
+		OC_App::loadApp('patch_assets');
 	}
 
 	public function register(IRegistrationContext $context): void {
