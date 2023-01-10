@@ -1,5 +1,5 @@
---- ../../../../../../../../../../lib/private/Files/AppData/AppData.php	2022-11-03 06:14:30.000000000 -0500
-+++ AppData.php	2023-01-10 12:28:35.914000000 -0600
+--- AppData.orig.php	2023-01-10 15:14:04.361000000 -0600
++++ AppData.php	2023-01-10 15:13:53.877000000 -0600
 @@ -34,18 +34,20 @@
  use OCP\Files\IRootFolder;
  use OCP\Files\Node;
@@ -51,13 +51,23 @@
  	private function getAppDataFolderName() {
  		$instanceId = $this->config->getValue('instanceid', null);
  		if ($instanceId === null) {
-@@ -69,19 +90,20 @@
+@@ -69,19 +90,30 @@
  
  		return 'appdata_' . $instanceId;
  	}
  
  	protected function getAppDataRootFolder(): Folder {
-+		$rootFolder = $this->customRoot ? $this->rootFolder->get('/appdataroot/') : $this->rootFolder;
++		$rootFolder = $this->rootFolder;
++		
++		if ($this->customRoot) {
++			foreach ($this->rootFolder->getDirectoryListing('/') as $dir) {
++				if ($dir->getName() == 'appdataroot') {
++					$rootFolder = $dir;
++					break;
++				}
++			}
++		}
++
  		$name = $this->getAppDataFolderName();
  
  		try {
@@ -74,13 +84,23 @@
  			}
  		}
  	}
-@@ -89,15 +111,16 @@
+@@ -89,15 +121,26 @@
  	/**
  	 * @return Folder
  	 * @throws \RuntimeException
  	 */
  	private function getAppDataFolder(): Folder {
-+		$rootFolder = $this->customRoot ? $this->rootFolder->get('/appdataroot/') : $this->rootFolder;
++		$rootFolder = $this->rootFolder;
++		
++		if ($this->customRoot) {
++			foreach ($this->rootFolder->getDirectoryListing('/') as $dir) {
++				if ($dir->getName() == 'appdataroot') {
++					$rootFolder = $dir;
++					break;
++				}
++			}
++		}
++
  		if ($this->folder === null) {
  			$name = $this->getAppDataFolderName();
  
@@ -92,19 +112,29 @@
  
  				try {
  					$this->folder = $appDataRootFolder->get($this->appId);
-@@ -113,10 +136,11 @@
+@@ -113,10 +156,21 @@
  
  		return $this->folder;
  	}
  
  	public function getFolder(string $name): ISimpleFolder {
-+		$rootFolder = $this->customRoot ? $this->rootFolder->get('/appdataroot/') : $this->rootFolder;
++		$rootFolder = $this->rootFolder;
++		
++		if ($this->customRoot) {
++			foreach ($this->rootFolder->getDirectoryListing('/') as $dir) {
++				if ($dir->getName() == 'appdataroot') {
++					$rootFolder = $dir;
++					break;
++				}
++			}
++		}
++
  		$key = $this->appId . '/' . $name;
  		if ($cachedFolder = $this->folders->get($key)) {
  			if ($cachedFolder instanceof \Exception) {
  				throw $cachedFolder;
  			} else {
-@@ -127,11 +151,11 @@
+@@ -127,11 +181,11 @@
  			// Hardening if somebody wants to retrieve '/'
  			if ($name === '/') {
  				$node = $this->getAppDataFolder();
@@ -117,7 +147,7 @@
  			$this->folders->set($key, $e);
  			throw $e;
  		}
-@@ -167,6 +191,6 @@
+@@ -167,6 +221,6 @@
  	}
  
  	public function getId(): int {

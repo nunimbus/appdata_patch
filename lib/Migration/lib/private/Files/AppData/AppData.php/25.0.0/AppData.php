@@ -98,6 +98,7 @@ class AppData implements IAppData {
 			foreach ($this->rootFolder->getDirectoryListing('/') as $dir) {
 				if ($dir->getName() == 'appdataroot') {
 					$rootFolder = $dir;
+					break;
 				}
 			}
 		}
@@ -128,6 +129,7 @@ class AppData implements IAppData {
 			foreach ($this->rootFolder->getDirectoryListing('/') as $dir) {
 				if ($dir->getName() == 'appdataroot') {
 					$rootFolder = $dir;
+					break;
 				}
 			}
 		}
@@ -162,6 +164,7 @@ class AppData implements IAppData {
 			foreach ($this->rootFolder->getDirectoryListing('/') as $dir) {
 				if ($dir->getName() == 'appdataroot') {
 					$rootFolder = $dir;
+					break;
 				}
 			}
 		}
