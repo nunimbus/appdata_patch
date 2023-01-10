@@ -92,7 +92,16 @@ class AppData implements IAppData {
 	}
 
 	protected function getAppDataRootFolder(): Folder {
-		$rootFolder = $this->customRoot ? $this->rootFolder->get('/appdataroot/') : $this->rootFolder;
+		$rootFolder = $this->rootFolder;
+		
+		if ($this->customRoot) {
+			foreach ($this->rootFolder->getDirectoryListing('/') as $dir) {
+				if ($dir->getName() == 'appdataroot') {
+					$rootFolder = $dir;
+				}
+			}
+		}
+
 		$name = $this->getAppDataFolderName();
 
 		try {
@@ -113,7 +122,16 @@ class AppData implements IAppData {
 	 * @throws \RuntimeException
 	 */
 	private function getAppDataFolder(): Folder {
-		$rootFolder = $this->customRoot ? $this->rootFolder->get('/appdataroot/') : $this->rootFolder;
+		$rootFolder = $this->rootFolder;
+		
+		if ($this->customRoot) {
+			foreach ($this->rootFolder->getDirectoryListing('/') as $dir) {
+				if ($dir->getName() == 'appdataroot') {
+					$rootFolder = $dir;
+				}
+			}
+		}
+
 		if ($this->folder === null) {
 			$name = $this->getAppDataFolderName();
 
@@ -138,7 +156,16 @@ class AppData implements IAppData {
 	}
 
 	public function getFolder(string $name): ISimpleFolder {
-		$rootFolder = $this->customRoot ? $this->rootFolder->get('/appdataroot/') : $this->rootFolder;
+		$rootFolder = $this->rootFolder;
+		
+		if ($this->customRoot) {
+			foreach ($this->rootFolder->getDirectoryListing('/') as $dir) {
+				if ($dir->getName() == 'appdataroot') {
+					$rootFolder = $dir;
+				}
+			}
+		}
+
 		$key = $this->appId . '/' . $name;
 		if ($cachedFolder = $this->folders->get($key)) {
 			if ($cachedFolder instanceof \Exception) {
