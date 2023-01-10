@@ -45,9 +45,7 @@ class AppData implements IAppData {
 	private ?Folder $folder = null;
 	/** @var CappedMemoryCache<ISimpleFolder|NotFoundException> */
 	private CappedMemoryCache $folders;
-
-	/** @var string */
-	private $appdataRoot = "";
+	private $customRoot = false;
 
 	/**
 	 * AppData constructor.
@@ -64,17 +62,23 @@ class AppData implements IAppData {
 		$this->appId = $appId;
 		$this->folders = new CappedMemoryCache();
 
-		if (in_array('appdataroot',\OC::$server->getSystemConfig()->getKeys())) {		
+		if (in_array('appdataroot',\OC::$server->getSystemConfig()->getKeys())) {	
+			// This is the actual filesystem location where the `appdata_` folder will be stored	
 			$arguments = [
 				'datadir' => \OC::$server->getSystemConfig()->getValue('appdataroot'),
 			];
-			// Have to use `appdata_[instanceid]` as the root because of `OC\Encryption\Util->getUidAndFilename()`
+
+			// Create a custom mount point to be used for the appdata folder root. This mount point is relative to the
+			// internal NC root folder `/`
 			$storage = new \OC\Files\Storage\LocalRootStorage($arguments);
 			$loader = \OC::$server->query(IStorageFactory::class);
-			$mount = new \OC\Files\Mount\MountPoint($storage, '/appdata_' . \OC::$server->getSystemConfig()->getValue('instanceid') . '/', $arguments, $loader);
-
+			$mount = new \OC\Files\Mount\MountPoint($storage, "/appdataroot/", $arguments, $loader);
 			\OC::$server->getMountManager()->addMount($mount);
-			$this->appdataRoot = 'appdata_' . \OC::$server->getSystemConfig()->getValue('instanceid') . '/';
+
+			// It would be nice to do `$this->rootFolder = $rootFolder->get('/appdataroot/')`, but this this would lead
+			// to a recursive segfault - this class' constructor is called as part of constructing the `IRootFolder`
+			// itself. Thus, a boolean is set, and the root folder is loaded appropriately in each function below.
+			$this->customRoot = true;
 		}
 	}
 
@@ -88,15 +92,16 @@ class AppData implements IAppData {
 	}
 
 	protected function getAppDataRootFolder(): Folder {
-		$name = $this->appdataRoot . $this->getAppDataFolderName();
+		$rootFolder = $this->customRoot ? $this->rootFolder->get('/appdataroot/') : $this->rootFolder;
+		$name = $this->getAppDataFolderName();
 
 		try {
 			/** @var Folder $node */
-			$node = $this->rootFolder->get($name);
+			$node = $rootFolder->get($name);
 			return $node;
 		} catch (NotFoundException $e) {
 			try {
-				return $this->rootFolder->newFolder($name);
+				return $rootFolder->newFolder($name);
 			} catch (NotPermittedException $e) {
 				throw new \RuntimeException('Could not get appdata folder');
 			}
@@ -108,11 +113,12 @@ class AppData implements IAppData {
 	 * @throws \RuntimeException
 	 */
 	private function getAppDataFolder(): Folder {
+		$rootFolder = $this->customRoot ? $this->rootFolder->get('/appdataroot/') : $this->rootFolder;
 		if ($this->folder === null) {
-			$name = $this->appdataRoot . $this->getAppDataFolderName();
+			$name = $this->getAppDataFolderName();
 
 			try {
-				$this->folder = $this->rootFolder->get($name . '/' . $this->appId);
+				$this->folder = $rootFolder->get($name . '/' . $this->appId);
 			} catch (NotFoundException $e) {
 				$appDataRootFolder = $this->getAppDataRootFolder();
 
@@ -132,6 +138,7 @@ class AppData implements IAppData {
 	}
 
 	public function getFolder(string $name): ISimpleFolder {
+		$rootFolder = $this->customRoot ? $this->rootFolder->get('/appdataroot/') : $this->rootFolder;
 		$key = $this->appId . '/' . $name;
 		if ($cachedFolder = $this->folders->get($key)) {
 			if ($cachedFolder instanceof \Exception) {
@@ -145,23 +152,12 @@ class AppData implements IAppData {
 			if ($name === '/') {
 				$node = $this->getAppDataFolder();
 			} else {
-				$path = $this->appdataRoot . $this->getAppDataFolderName() . '/' . $this->appId . '/' . $name;
-				$node = $this->rootFolder->get($path);
+				$path = $this->getAppDataFolderName() . '/' . $this->appId . '/' . $name;
+				$node = $rootFolder->get($path);
 			}
 		} catch (NotFoundException $e) {
 			$this->folders->set($key, $e);
 			throw $e;
-		}
-
-		$mountPoint = $this->getAppDataFolder()->getMountPoint()->getMountPoint();
-
-		if (! \OC::$server->getMountManager()->find($mountPoint)->getStorage()->file_exists($this->getAppDataFolderName() . '/' . $key)) {
-			if ($key == 'appstore//') {
-				\OC::$server->getMountManager()->find($mountPoint)->getStorage()->mkdir($this->getAppDataFolderName() . '/' . $key);
-			}
-			else {
-				throw new NotFoundException;
-			}
 		}
 
 		/** @var Folder $node */
