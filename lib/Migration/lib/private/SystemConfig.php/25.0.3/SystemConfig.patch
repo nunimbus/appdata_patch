@@ -1,0 +1,19 @@
+--- /home/user/git/latest-25/nextcloud/lib/private/SystemConfig.php	2023-02-15 11:41:58.429000000 -0600
++++ ./lib/private/SystemConfig.php/25.0.3/SystemConfig.php	2023-02-15 11:29:45.727000000 -0600
+@@ -32,15 +32,15 @@
+  * Class which provides access to the system config values stored in config.php
+  * Internal class for bootstrap only.
+  * fixes cyclic DI: AllConfig needs AppConfig needs Database needs AllConfig
+  */
+ class SystemConfig {
+-
+ 	/** @var array */
+ 	protected $sensitiveValues = [
+ 		'instanceid' => true,
+ 		'datadirectory' => true,
++		'appdataroot' => true,
+ 		'dbname' => true,
+ 		'dbhost' => true,
+ 		'dbpassword' => true,
+ 		'dbuser' => true,
+ 		'activity_dbname' => true,

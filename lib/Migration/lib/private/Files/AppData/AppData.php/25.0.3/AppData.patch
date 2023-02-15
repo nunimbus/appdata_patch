@@ -1,0 +1,50 @@
+--- /home/user/git/latest-25/nextcloud/lib/private/Files/AppData/AppData.php	2023-02-15 11:41:25.848000000 -0600
++++ ./lib/private/Files/AppData/AppData.php/25.0.3/AppData.php	2023-02-15 11:30:29.762000000 -0600
+@@ -26,10 +26,13 @@
+  */
+ namespace OC\Files\AppData;
+ 
+ use OCP\Cache\CappedMemoryCache;
+ use OC\Files\SimpleFS\SimpleFolder;
++use OC\Files\Node\LazyRoot;
++use OC\Files\Storage\LocalRootStorage;
++use OC\Files\Mount\MountPoint;
+ use OC\SystemConfig;
+ use OCP\Files\Folder;
+ use OCP\Files\IAppData;
+ use OCP\Files\IRootFolder;
+ use OCP\Files\Node;
+@@ -53,14 +56,32 @@
+ 	 * @param string $appId
+ 	 */
+ 	public function __construct(IRootFolder $rootFolder,
+ 								SystemConfig $systemConfig,
+ 								string $appId) {
+-		$this->rootFolder = $rootFolder;
+ 		$this->config = $systemConfig;
+ 		$this->appId = $appId;
+ 		$this->folders = new CappedMemoryCache();
++
++		$this->rootFolder = new LazyRoot(function () use ($rootFolder, $systemConfig) {
++			if ($appdataroot = $systemConfig->getValue('appdataroot', null)) {
++				$instanceId = $systemConfig->getValue('instanceid', null);
++				if ($instanceId === null) {
++					throw new \RuntimeException('no instance id!');
++				}
++		
++				$folderName = 'appdata_' . $instanceId;
++				
++				$arguments = [
++					'datadir' => $appdataroot,
++				];
++				$storage = new LocalRootStorage($arguments);
++				$mount = new MountPoint($storage, $folderName, $arguments);
++				\OC::$server->getMountManager()->addMount($mount);
++			}
++			return $rootFolder;
++		});
+ 	}
+ 
+ 	private function getAppDataFolderName() {
+ 		$instanceId = $this->config->getValue('instanceid', null);
+ 		if ($instanceId === null) {

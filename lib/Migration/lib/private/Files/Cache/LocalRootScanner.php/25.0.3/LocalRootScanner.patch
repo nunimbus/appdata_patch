@@ -1,0 +1,18 @@
+--- /home/user/git/latest-25/nextcloud/lib/private/Files/Cache/LocalRootScanner.php	2023-02-15 11:41:46.226000000 -0600
++++ ./lib/private/Files/Cache/LocalRootScanner.php/25.0.3/LocalRootScanner.php	2023-02-15 11:28:19.928000000 -0600
+@@ -41,9 +41,13 @@
+ 			return null;
+ 		}
+ 	}
+ 
+ 	private function shouldScanPath(string $path): bool {
++		$storageId = $this->storage->getId();
++		$mount = \OC::$server->getMountManager()->findByStorageId($storageId);
++		$mountPoint = sizeof($mount) == 1 ? $mount[0]->getMountPoint() : null;
++
+ 		$path = trim($path, '/');
+-		return $path === '' || strpos($path, 'appdata_') === 0 || strpos($path, '__groupfolders') === 0;
++		return $path === '' || strpos($path, 'appdata_') === 0 || strpos($path, '__groupfolders') === 0 || strpos($mountPoint, '/appdata_') === 0;
+ 	}
+ }
+\ No newline at end of file
